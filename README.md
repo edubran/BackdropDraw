@@ -120,6 +120,15 @@ This can happen if you zoom or pan the Node Graph between pressing the shortcut 
 
 ---
 
+**Eduardo Brandao**  
+[eduardo@bosonpost.com.br](mailto:eduardo@bosonpost.com.br)
+
+Did this tool help you?
+You can buy me a coffee via PayPal at eduardo@bosonpost.com.br
+or by purchasing my book.
+https://vfxebook-9dqwsk8s.manus.space/
+
+
 ## License
 
 MIT — free to use, modify, and distribute.
