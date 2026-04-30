@@ -2,25 +2,30 @@
 
 A Nuke tool by **Eduardo Brandao** — [eduardo@bosonpost.com.br](mailto:eduardo@bosonpost.com.br)
 
-Draw a rubber-band area directly in the Node Graph to create a labeled, colored BackdropNode — no need to select nodes first.
+Draw a rubber-band area directly in the Node Graph to create a labeled, colored BackdropNode — fast, precise, and fully configurable per user.
 
 ---
 
 ## Features
 
-- **Draw to create** — press the shortcut, click and drag to define the area, done
-- **Dialog near your cursor** — the label/color window appears right where your mouse is
-- **Instant typing** — the label field is focused automatically on open
-- **Preset labels** — dropdown with common comp department labels
-- **Color palette** — 8 quick-pick colors + full custom color picker
-- **Auto z-order** — each new backdrop is placed behind all existing ones automatically
-- **Works in all layouts** — correctly identifies the Node Graph in Compositing, Scripting, and any custom layout
+- **Draw to create** — press the shortcut, click and drag to define the area
+- **Preset label buttons** — click any preset to instantly fill the label field
+- **Color swatches** — visual color squares with tooltip on hover
+- **Random color** — one click for a random muted backdrop color
+- **Custom color picker** — full color picker when you need something specific
+- **Font size control** — adjust per backdrop, right in the dialog
+- **Text alignment** — left, center, or right per backdrop
+- **Auto z-order** — each new backdrop goes behind all existing ones automatically
+- **Dialog near cursor** — the dialog appears where your mouse is for speed
+- **Auto-focus label field** — start typing immediately, no extra clicks
+- **Per-user settings** — configure via Edit > Backdrop Draw Settings, saved to JSON
+- **Works in all layouts** — correctly identifies the DAG in any Nuke layout
 
 ---
 
 ## Requirements
 
-- Nuke 12 or later (tested on Nuke 13/14/15)
+- Nuke 12 or later
 - PySide2 (bundled with Nuke)
 
 ---
@@ -40,7 +45,7 @@ backdrop_draw.register()
 
 3. Restart Nuke.
 
-On startup you should see in the Script Editor:
+On startup you will see in the Script Editor:
 ```
 [Backdrop Draw] Registered — shortcut: v
 ```
@@ -54,80 +59,51 @@ On startup you should see in the Script Editor:
 | 1 | Press **`v`** inside the Node Graph — cursor becomes a crosshair |
 | 2 | Click and drag to draw the backdrop area |
 | 3 | Release the mouse — the dialog appears near your cursor |
-| 4 | Type a custom label **or** pick one from the Presets dropdown |
-| 5 | Choose a color from the palette or use the custom color picker |
-| 6 | Click **OK** — the backdrop is created behind your nodes |
+| 4 | Click a **preset button** to fill the label, or type a custom name |
+| 5 | Click a **color swatch**, press 🎲 for random, or ＋ for custom |
+| 6 | Adjust **font size** and **text alignment** if needed |
+| 7 | Press **Enter** or click **OK** — backdrop is created |
 
 Press **Escape** at any time to cancel.
 
 ---
 
-## Preset Labels
+## Settings
 
-The following labels are available in the dropdown out of the box:
+Open **Edit > Backdrop Draw Settings** in the Nuke menu bar.
 
-`Additive_Key` · `Bloom` · `Camera_Projection` · `Camera_Setup` · `CG` · `CG:Ambient` · `CG:Diffuse` · `CG:Reflection` · `CG:Refraction` · `CG:Shadow` · `CG:Specular` · `Cleanup` · `Controllers` · `Color_Correction` · `Despill` · `Edge_Fixes` · `Elements` · `FX` · `Key` · `Matte` · `Lens_Flare` · `Light_Setup` · `Light_Wrap` · `Output` · `Previous_Versions` · `References` · `Relight` · `Resources` · `Rig_Removal` · `Roto` · `Set_Extension` · `Stereo_Fixes` · `Temp` · `Test` · `Transformations`
+Settings are saved per-user at `~/.nuke/backdrop_draw_settings.json` and include:
+
+| Setting | Description |
+|---------|-------------|
+| Shortcut key | The keyboard shortcut to activate the tool (requires restart) |
+| Default font size | Starting font size in the dialog |
+| Padding | Extra space added around the drawn area (canvas units) |
+| Preset button columns | Number of columns in the preset grid (1–6) |
+| Default text alignment | Left, Center, or Right |
+| Preset Labels | One label per line — edit freely |
+| Preset Colors | One color per line in format `Name #rrggbb` |
 
 ---
 
-## Customisation
+## Default Preset Labels
 
-Edit the `SETTINGS` dictionary at the top of `backdrop_draw.py`:
-
-```python
-SETTINGS = {
-    "shortcut"      : "v",       # Keyboard shortcut
-    "default_label" : "",        # Pre-filled label text
-    "font_size"     : 42,        # Backdrop label font size
-    "padding"       : 40,        # Extra space around the drawn area
-    "presets"       : [...],     # List of preset label strings
-    "preset_colors" : [...],     # List of (name, "#rrggbb") tuples
-}
-```
-
-### Adding preset labels
-
-```python
-"presets": [
-    "Additive_Key",
-    "My_Custom_Label",   # <-- add your own here
-    ...
-],
-```
-
-### Adding preset colors
-
-```python
-"preset_colors": [
-    ("Dark Gray", "#2a2a2a"),
-    ("Teal",      "#0d4040"),   # <-- add your own here
-    ...
-],
-```
+`Additive_Key` · `Bloom` · `Camera_Projection` · `Camera_Setup` · `CG` · `CG:Ambient` · `CG:Diffuse` · `CG:Reflection` · `CG:Refraction` · `CG:Shadow` · `CG:Specular` · `Cleanup` · `Controllers` · `Color_Correction` · `Despill` · `Edge_Fixes` · `Elements` · `FX` · `Key` · `Matte` · `Lens_Flare` · `Light_Setup` · `Light_Wrap` · `Output` · `Previous_Versions` · `References` · `Relight` · `Resources` · `Rig_Removal` · `Roto` · `Set_Extension` · `Stereo_Fixes` · `Temp` · `Test` · `Transformations`
 
 ---
 
 ## Troubleshooting
 
 **The tool does not activate when I press `v`**
-Make sure the Node Graph panel has focus (click inside it first). The shortcut only works when registered — check that `backdrop_draw.register()` is in your `menu.py` and that Nuke was restarted after installing.
+Make sure the Node Graph panel has focus (click inside it first). After changing the shortcut in Settings, a Nuke restart is required.
 
 **"Could not find the Node Graph" message**
-The Node Graph must be visible in the current layout. Switch to a layout that shows the DAG panel and try again.
+The Node Graph must be visible in the current layout. Switch to a layout that includes the DAG panel and try again.
 
 **The backdrop appears in the wrong position**
-This can happen if you zoom or pan the Node Graph between pressing the shortcut and drawing. The tool captures the canvas state at the moment the shortcut is pressed — avoid panning/zooming between activation and drawing.
+The tool captures zoom and canvas position at the moment the shortcut is pressed. Avoid panning or zooming the Node Graph between pressing the shortcut and finishing the draw.
 
 ---
-
-**Eduardo Brandao**  
-[eduardo@bosonpost.com.br](mailto:eduardo@bosonpost.com.br)
-
-Did this tool help you?
-You can buy me a coffee via PayPal at eduardo@bosonpost.com.br
-or by purchasing my book.
-https://vfxebook-9dqwsk8s.manus.space/
-
 
 ## License
 
