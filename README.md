@@ -6,6 +6,10 @@ Draw a rubber-band area directly in the Node Graph to create a labeled, colored 
 
 ---
 
+https://github.com/user-attachments/assets/a232fe1e-f8e3-4166-bac9-df94a7a3d80d
+
+https://github.com/user-attachments/assets/73800f5d-8253-4615-a073-5138fb3683b3
+
 ## Features
 
 - **Draw to create** — press the shortcut, click and drag to define the area
@@ -19,7 +23,6 @@ Draw a rubber-band area directly in the Node Graph to create a labeled, colored 
 - **Dialog near cursor** — the dialog appears where your mouse is for speed
 - **Auto-focus label field** — start typing immediately, no extra clicks
 - **Per-user settings** — configure via Edit > Backdrop Draw Settings, saved to JSON
-- **Works in all layouts** — correctly identifies the DAG in any Nuke layout
 
 ---
 
