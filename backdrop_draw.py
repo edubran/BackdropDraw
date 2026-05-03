@@ -99,6 +99,146 @@ CFG = _load_settings()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  SHARED UI STYLESHEET  (matches bosonpost tool family)
+# ─────────────────────────────────────────────────────────────────────────────
+_STYLESHEET = """
+    QDialog, QWidget {
+        background: #1e1e1e;
+    }
+    QLabel {
+        color: #c8c8c8;
+        font-size: 12px;
+    }
+    QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit {
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        border-radius: 4px;
+        color: #e0e0e0;
+        font-size: 12px;
+        padding: 4px 8px;
+        min-height: 24px;
+    }
+    QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover,
+    QComboBox:hover, QPlainTextEdit:hover {
+        border: 1px solid #555;
+    }
+    QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus,
+    QComboBox:focus, QPlainTextEdit:focus {
+        border: 1px solid #666;
+    }
+    QComboBox QAbstractItemView {
+        background: #2a2a2a;
+        color: #e0e0e0;
+        selection-background-color: #3a3a3a;
+    }
+    QCheckBox {
+        color: #c8c8c8;
+        font-size: 12px;
+        spacing: 8px;
+    }
+    QCheckBox::indicator {
+        width: 16px; height: 16px;
+        border: 1px solid #3a3a3a;
+        border-radius: 3px;
+        background: #2a2a2a;
+    }
+    QCheckBox::indicator:checked {
+        background: #555;
+        border: 1px solid #777;
+    }
+    QPushButton {
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        border-radius: 5px;
+        color: #e0e0e0;
+        font-size: 12px;
+        padding: 6px 18px;
+        min-height: 28px;
+    }
+    QPushButton:hover   { background: #333; border: 1px solid #555; }
+    QPushButton:pressed { background: #3a3a3a; }
+    QPushButton:checked { background: #3a3a5a; border: 1px solid #6a6aaa; color: #aaaaee; }
+    QPushButton#save_btn {
+        background: #2d4a2d;
+        border: 1px solid #3d6b3d;
+        color: #a8d8a8;
+    }
+    QPushButton#save_btn:hover { background: #375937; border: 1px solid #4e8a4e; }
+    QTabWidget::pane {
+        border: 1px solid #3a3a3a;
+        background: #1e1e1e;
+    }
+    QTabBar::tab {
+        background: #2a2a2a;
+        color: #c8c8c8;
+        border: 1px solid #3a3a3a;
+        border-bottom: none;
+        padding: 5px 14px;
+        font-size: 12px;
+    }
+    QTabBar::tab:selected {
+        background: #1e1e1e;
+        color: #e0e0e0;
+        border-bottom: 1px solid #1e1e1e;
+    }
+    QTabBar::tab:hover { background: #333; }
+    QListWidget {
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        border-radius: 4px;
+        color: #e0e0e0;
+        font-size: 12px;
+    }
+    QListWidget::item:selected { background: #3a3a5a; color: #e0e0e0; }
+    QListWidget::item:hover    { background: #333; }
+    QTableWidget {
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        color: #e0e0e0;
+        gridline-color: #3a3a3a;
+        font-size: 12px;
+    }
+    QTableWidget::item:selected { background: #3a3a5a; }
+    QHeaderView::section {
+        background: #252525;
+        color: #999;
+        border: 1px solid #3a3a3a;
+        padding: 4px;
+        font-size: 11px;
+    }
+    QScrollBar:vertical {
+        background: #1e1e1e; width: 8px; border-radius: 4px;
+    }
+    QScrollBar::handle:vertical {
+        background: #3a3a3a; border-radius: 4px; min-height: 20px;
+    }
+    QScrollBar::handle:vertical:hover { background: #555; }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+    QFrame[frameShape="4"] { color: #2e2e2e; }
+"""
+
+def _section_label(text):
+    """Uppercase section header matching bosonpost tool family style."""
+    lbl = QtWidgets.QLabel(text.upper())
+    lbl.setStyleSheet(
+        "color: #666; font-size: 10px; font-weight: 600; "
+        "letter-spacing: 1px; margin-top: 8px;"
+    )
+    return lbl
+
+def _author_footer(layout):
+    """Standard author footer matching bosonpost tool family style."""
+    sep = QtWidgets.QFrame()
+    sep.setFrameShape(QtWidgets.QFrame.HLine)
+    sep.setStyleSheet("color: #2e2e2e; margin-top: 6px;")
+    layout.addWidget(sep)
+    footer = QtWidgets.QLabel("Eduardo Brandao  \u2022  eduardo@bosonpost.com.br")
+    footer.setAlignment(Qt.AlignCenter)
+    footer.setStyleSheet("color: #444; font-size: 10px; margin-top: 4px;")
+    layout.addWidget(footer)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -186,12 +326,13 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setMinimumWidth(520)
         self.setMinimumHeight(620)
         self.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint)
+        self.setStyleSheet(_STYLESHEET)
         self._build_ui()
 
     def _build_ui(self):
         root = QtWidgets.QVBoxLayout(self)
         root.setSpacing(10)
-        root.setContentsMargins(14, 14, 14, 14)
+        root.setContentsMargins(20, 20, 20, 20)
 
         tabs = QtWidgets.QTabWidget()
         tabs.addTab(self._build_general_tab(), "General")
@@ -203,49 +344,87 @@ class SettingsDialog(QtWidgets.QDialog):
             "<i>Shortcut changes require a Nuke restart. All other changes apply immediately.</i>"
         )
         note.setWordWrap(True)
+        note.setStyleSheet("color: #555; font-size: 11px;")
         root.addWidget(note)
 
-        btns = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Save | QtWidgets.QDialogButtonBox.Cancel
-        )
-        btns.accepted.connect(self._save)
-        btns.rejected.connect(self.reject)
-        root.addWidget(btns)
+        _author_footer(root)
+
+        btn_row = QtWidgets.QHBoxLayout()
+        btn_cancel = QtWidgets.QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.reject)
+        btn_save = QtWidgets.QPushButton("Save")
+        btn_save.setObjectName("save_btn")
+        btn_save.clicked.connect(self._save)
+        btn_row.addStretch()
+        btn_row.addWidget(btn_cancel)
+        btn_row.addWidget(btn_save)
+        root.addLayout(btn_row)
 
     # ── General tab ───────────────────────────────────────────────────────────
 
     def _build_general_tab(self):
         w = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(w)
-        form.setSpacing(10)
-        form.setContentsMargins(10, 10, 10, 10)
+        layout = QtWidgets.QVBoxLayout(w)
+        layout.setSpacing(8)
+        layout.setContentsMargins(14, 14, 14, 14)
 
+        layout.addWidget(_section_label("Shortcut"))
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(QtWidgets.QLabel("Shortcut key:"))
+        row.addStretch()
         self.shortcut_edit = QtWidgets.QLineEdit(CFG.get("shortcut", "v"))
-        form.addRow("Shortcut key:", self.shortcut_edit)
+        self.shortcut_edit.setMaximumWidth(80)
+        row.addWidget(self.shortcut_edit)
+        layout.addLayout(row)
 
+        layout.addWidget(_section_label("Appearance"))
+
+        row2 = QtWidgets.QHBoxLayout()
+        row2.addWidget(QtWidgets.QLabel("Default font size:"))
+        row2.addStretch()
         self.font_spin = QtWidgets.QSpinBox()
         self.font_spin.setRange(10, 200)
         self.font_spin.setValue(CFG.get("font_size", 42))
-        form.addRow("Default font size:", self.font_spin)
+        self.font_spin.setFixedWidth(80)
+        row2.addWidget(self.font_spin)
+        layout.addLayout(row2)
 
+        row3 = QtWidgets.QHBoxLayout()
+        row3.addWidget(QtWidgets.QLabel("Padding (canvas units):"))
+        row3.addStretch()
         self.padding_spin = QtWidgets.QSpinBox()
         self.padding_spin.setRange(0, 300)
         self.padding_spin.setValue(CFG.get("padding", 40))
-        form.addRow("Padding (canvas units):", self.padding_spin)
+        self.padding_spin.setFixedWidth(80)
+        row3.addWidget(self.padding_spin)
+        layout.addLayout(row3)
 
+        layout.addWidget(_section_label("Behaviour"))
+
+        row4 = QtWidgets.QHBoxLayout()
+        row4.addWidget(QtWidgets.QLabel("Preset button columns:"))
+        row4.addStretch()
         self.cols_spin = QtWidgets.QSpinBox()
         self.cols_spin.setRange(1, 6)
         self.cols_spin.setValue(CFG.get("preset_columns", 3))
-        form.addRow("Preset button columns:", self.cols_spin)
+        self.cols_spin.setFixedWidth(80)
+        row4.addWidget(self.cols_spin)
+        layout.addLayout(row4)
 
+        row5 = QtWidgets.QHBoxLayout()
+        row5.addWidget(QtWidgets.QLabel("Default text alignment:"))
+        row5.addStretch()
         self.align_combo = QtWidgets.QComboBox()
         for lbl, val in [("Left", "left"), ("Center", "center"), ("Right", "right")]:
             self.align_combo.addItem(lbl, val)
         idx = self.align_combo.findData(CFG.get("text_alignment", "center"))
         if idx >= 0:
             self.align_combo.setCurrentIndex(idx)
-        form.addRow("Default text alignment:", self.align_combo)
+        self.align_combo.setMinimumWidth(100)
+        row5.addWidget(self.align_combo)
+        layout.addLayout(row5)
 
+        layout.addStretch()
         return w
 
     # ── Presets tab ───────────────────────────────────────────────────────────
@@ -476,28 +655,29 @@ class BackdropDialog(QtWidgets.QDialog):
         super(BackdropDialog, self).__init__(parent)
         self.setWindowTitle("Backdrop Draw")
         self.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint)
+        self.setStyleSheet(_STYLESHEET)
         self._cursor_pos = cursor_pos
-        self._color      = _random_dark_color()   # random color by default
+        self._color      = _random_dark_color()
         self._font_size  = CFG.get("font_size", 42)
         self._alignment  = CFG.get("text_alignment", "center")
-        self._bold       = True                   # bold label by default
+        self._bold       = True
         self._build_ui()
 
     def _build_ui(self):
         root = QtWidgets.QVBoxLayout(self)
         root.setSpacing(8)
-        root.setContentsMargins(10, 10, 10, 10)
+        root.setContentsMargins(20, 20, 20, 20)
 
         # ── Label input ───────────────────────────────────────────────────────
-        root.addWidget(QtWidgets.QLabel("<b>Label</b>"))
+        root.addWidget(_section_label("Label"))
         self.name_edit = QtWidgets.QLineEdit()
-        self.name_edit.setPlaceholderText("Type a name or click a preset below…")
+        self.name_edit.setPlaceholderText("Type a name or click a preset below...")
         self.name_edit.setFixedHeight(28)
         self.name_edit.returnPressed.connect(self.accept)
         root.addWidget(self.name_edit)
 
         # ── Preset buttons grid ───────────────────────────────────────────────
-        root.addWidget(QtWidgets.QLabel("<b>Presets</b>"))
+        root.addWidget(_section_label("Presets"))
         preset_widget = QtWidgets.QWidget()
         cols = CFG.get("preset_columns", 3)
         preset_layout = QtWidgets.QGridLayout(preset_widget)
@@ -507,23 +687,17 @@ class BackdropDialog(QtWidgets.QDialog):
         presets = CFG.get("presets", [])
         for i, label in enumerate(presets):
             btn = QtWidgets.QPushButton(label)
-            btn.setFixedHeight(28)
+            btn.setFixedHeight(26)
             btn.setStyleSheet(
                 "QPushButton {"
-                "  text-align: center;"
-                "  padding: 2px 6px;"
-                "  border-radius: 3px;"
-                "  border: 1px solid #555;"
-                "  background-color: #3a3a3a;"
+                "  text-align: center; padding: 2px 6px;"
+                "  border-radius: 4px; border: 1px solid #3a3a3a;"
+                "  background-color: #2a2a2a; color: #c8c8c8; font-size: 12px;"
                 "}"
                 "QPushButton:hover {"
-                "  background-color: #4a6fa5;"
-                "  border-color: #6a9fd8;"
-                "  color: white;"
+                "  background-color: #333; border: 1px solid #555; color: #e0e0e0;"
                 "}"
-                "QPushButton:pressed {"
-                "  background-color: #2a5080;"
-                "}"
+                "QPushButton:pressed { background-color: #3a3a5a; border: 1px solid #6a6aaa; }"
             )
             btn.clicked.connect(self._make_label_handler(label))
             preset_layout.addWidget(btn, i // cols, i % cols)
@@ -531,7 +705,7 @@ class BackdropDialog(QtWidgets.QDialog):
         root.addWidget(preset_widget)
 
         # ── Color swatches ────────────────────────────────────────────────────
-        root.addWidget(QtWidgets.QLabel("<b>Color</b>"))
+        root.addWidget(_section_label("Color"))
         color_row = QtWidgets.QHBoxLayout()
         color_row.setSpacing(4)
 
@@ -548,16 +722,16 @@ class BackdropDialog(QtWidgets.QDialog):
 
         color_row.addStretch()
 
-        rand_btn = QtWidgets.QPushButton("🎲")
-        rand_btn.setFixedSize(28, 28)
+        rand_btn = QtWidgets.QPushButton("Rnd")
+        rand_btn.setFixedSize(36, 28)
         rand_btn.setToolTip("Random color")
         rand_btn.setCursor(Qt.PointingHandCursor)
         rand_btn.clicked.connect(self._set_random_color)
         color_row.addWidget(rand_btn)
 
-        custom_btn = QtWidgets.QPushButton("＋")
+        custom_btn = QtWidgets.QPushButton("+")
         custom_btn.setFixedSize(28, 28)
-        custom_btn.setToolTip("Custom color…")
+        custom_btn.setToolTip("Custom color...")
         custom_btn.setCursor(Qt.PointingHandCursor)
         custom_btn.clicked.connect(self._pick_custom_color)
         color_row.addWidget(custom_btn)
@@ -569,6 +743,7 @@ class BackdropDialog(QtWidgets.QDialog):
         root.addLayout(color_row)
 
         # ── Font size + Alignment ─────────────────────────────────────────────
+        root.addWidget(_section_label("Options"))
         opts_row = QtWidgets.QHBoxLayout()
         opts_row.setSpacing(6)
 
@@ -583,7 +758,7 @@ class BackdropDialog(QtWidgets.QDialog):
         opts_row.addWidget(QtWidgets.QLabel("Align:"))
 
         self._align_btns = {}
-        for symbol, val in [("◀", "left"), ("▬", "center"), ("▶", "right")]:
+        for symbol, val in [("L", "left"), ("C", "center"), ("R", "right")]:
             btn = QtWidgets.QPushButton(symbol)
             btn.setCheckable(True)
             btn.setFixedSize(26, 26)
@@ -602,12 +777,21 @@ class BackdropDialog(QtWidgets.QDialog):
         root.addLayout(opts_row)
 
         # ── OK / Cancel ───────────────────────────────────────────────────────
-        btns = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
-        )
-        btns.accepted.connect(self.accept)
-        btns.rejected.connect(self.reject)
-        root.addWidget(btns)
+        sep = QtWidgets.QFrame()
+        sep.setFrameShape(QtWidgets.QFrame.HLine)
+        sep.setStyleSheet("color: #2e2e2e; margin-top: 4px;")
+        root.addWidget(sep)
+
+        btn_row = QtWidgets.QHBoxLayout()
+        btn_cancel = QtWidgets.QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.reject)
+        btn_ok = QtWidgets.QPushButton("Create Backdrop")
+        btn_ok.setObjectName("save_btn")
+        btn_ok.clicked.connect(self.accept)
+        btn_row.addStretch()
+        btn_row.addWidget(btn_cancel)
+        btn_row.addWidget(btn_ok)
+        root.addLayout(btn_row)
 
         self._apply_color(self._color)
         # No swatch is pre-selected since color is random
