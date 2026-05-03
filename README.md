@@ -74,6 +74,10 @@ Open **Edit > Backdrop Draw Settings** in the Nuke menu bar.
 
 Settings are saved per-user at `~/.nuke/backdrop_draw_settings.json` and include:
 
+![Panel](docs/Screen_1.jpg)
+![Panel](docs/Screen_2.jpg)
+![Panel](docs/Screen_3.jpg)
+
 | Setting | Description |
 |---------|-------------|
 | Shortcut key | The keyboard shortcut to activate the tool (requires restart) |
@@ -104,6 +108,16 @@ The Node Graph must be visible in the current layout. Switch to a layout that in
 The tool captures zoom and canvas position at the moment the shortcut is pressed. Avoid panning or zooming the Node Graph between pressing the shortcut and finishing the draw.
 
 ---
+
+## Author
+
+**Eduardo Brandao**  
+[eduardo@bosonpost.com.br](mailto:eduardo@bosonpost.com.br)
+
+Did this tool help you?
+You can buy me a coffee via PayPal at eduardo@bosonpost.com.br
+or by purchasing my book.
+https://vfxebook-9dqwsk8s.manus.space/
 
 ## License
 
