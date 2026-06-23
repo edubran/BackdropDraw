@@ -270,15 +270,17 @@ def _alignment_prefix(alignment):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _get_node_graph_widget():
-    for top in QtWidgets.QApplication.topLevelWidgets():
-        for child in top.findChildren(QtWidgets.QWidget):
-            if type(child).__name__ != "QGLWidget":
-                continue
-            parent = child.parent()
-            if parent is None or type(parent).__name__ != "QWidget":
-                continue
-            if parent.objectName().startswith("DAG."):
-                return child
+    """
+    Find the Nuke Node Graph (DAG) widget by objectName.
+    Uses allWidgets() and checks objectName directly, which works across
+    Nuke 12-15 regardless of the underlying OpenGL widget structure.
+    """
+    for widget in QtWidgets.QApplication.allWidgets():
+        try:
+            if widget.objectName().strip().startswith("DAG."):
+                return widget
+        except Exception:
+            pass
     return None
 
 def _capture_dag_state(ng):
@@ -904,7 +906,10 @@ class DrawOverlay(QtWidgets.QWidget):
         self.setMouseTracking(True)
         self._origin = None
         self._rubber = QtWidgets.QRubberBand(QtWidgets.QRubberBand.Rectangle, self)
-        self.setGeometry(QtWidgets.QApplication.primaryScreen().geometry())
+        # Cover the screen where the cursor currently is (multi-monitor safe)
+        cursor_screen = QtWidgets.QApplication.screenAt(QtGui.QCursor.pos())
+        screen = cursor_screen if cursor_screen else QtWidgets.QApplication.primaryScreen()
+        self.setGeometry(screen.geometry())
         self.show()
         self.raise_()
         self.activateWindow()
