@@ -38,8 +38,25 @@ import os
 import json
 import random
 import nuke
-from PySide2 import QtWidgets, QtCore, QtGui
-from PySide2.QtCore import Qt
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Qt binding detection — PySide2 (Nuke 11-15) or PySide6 (Nuke 16+)
+# ─────────────────────────────────────────────────────────────────────────────
+try:
+    from PySide6 import QtWidgets, QtCore, QtGui
+    from PySide6.QtCore import Qt
+    _PYSIDE = 6
+except ImportError:
+    from PySide2 import QtWidgets, QtCore, QtGui
+    from PySide2.QtCore import Qt
+    _PYSIDE = 2
+
+
+def _exec_dialog(dialog):
+    """exec_() in PySide2, exec() in PySide6 — call the right one."""
+    if hasattr(dialog, "exec"):
+        return dialog.exec()
+    return dialog.exec_()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -271,31 +288,91 @@ def _alignment_prefix(alignment):
 
 def _get_node_graph_widget():
     """
-    Find the Nuke Node Graph (DAG) widget by objectName.
-    Uses allWidgets() and checks objectName directly, which works across
-    Nuke 12-15 regardless of the underlying OpenGL widget structure.
+    Locate the Node Graph (DAG) viewport widget.
+
+    Strategy 1 - objectName scan (works across Nuke versions):
+        Walk every widget and look for any whose objectName contains "DAG".
+        Prefer a GL child inside that hierarchy; fall back to the DAG widget itself.
+
+    Strategy 2 - class-name scan (last resort):
+        Find the largest GL-family widget on screen (>200px each side).
     """
-    for widget in QtWidgets.QApplication.allWidgets():
-        try:
-            if widget.objectName().strip().startswith("DAG."):
-                return widget
-        except Exception:
-            pass
+    try:
+        # Strategy 1: objectName contains "dag"
+        dag_candidates = []
+        for top in QtWidgets.QApplication.topLevelWidgets():
+            for w in top.findChildren(QtWidgets.QWidget):
+                try:
+                    if "dag" in w.objectName().lower():
+                        dag_candidates.append(w)
+                except Exception:
+                    pass
+
+        if dag_candidates:
+            # Prefer a GL child inside the DAG hierarchy
+            for w in dag_candidates:
+                for child in w.findChildren(QtWidgets.QWidget):
+                    if "gl" in type(child).__name__.lower():
+                        return child
+            # No GL child — return the DAG widget itself
+            return dag_candidates[-1]
+
+        # Strategy 2: largest GL widget visible on screen
+        gl_candidates = []
+        for top in QtWidgets.QApplication.topLevelWidgets():
+            for w in top.findChildren(QtWidgets.QWidget):
+                try:
+                    if ("gl" in type(w).__name__.lower()
+                            and w.width() > 200 and w.height() > 200):
+                        gl_candidates.append(w)
+                except Exception:
+                    pass
+
+        if gl_candidates:
+            return max(gl_candidates, key=lambda w: w.width() * w.height())
+
+    except Exception as e:
+        print("[Backdrop Draw] Error finding Node Graph: %s" % e)
+
     return None
 
+
+def _diagnose_dag():
+    """
+    Run this in Nuke's Script Editor to see what widget names actually exist:
+        import backdrop_draw; backdrop_draw._diagnose_dag()
+    Then paste the output here so we can fix the lookup.
+    """
+    print("\n=== Backdrop Draw: DAG widget diagnostic ===")
+    for top in QtWidgets.QApplication.topLevelWidgets():
+        for w in top.findChildren(QtWidgets.QWidget):
+            cls  = type(w).__name__
+            name = w.objectName()
+            sz   = "%dx%d" % (w.width(), w.height())
+            if any(k in cls.lower()  for k in ("gl", "dag", "node", "graph")) or \
+               any(k in name.lower() for k in ("gl", "dag", "node", "graph")):
+                print("  cls=%-30s obj=%-40s size=%s" % (cls, name or "<none>", sz))
+    print("=== end ===\n")
+
 def _capture_dag_state(ng):
+    """Capture zoom, center and screen geometry of the DAG widget."""
     try:
         zoom   = nuke.zoom()
         cx, cy = nuke.center()
     except Exception:
         zoom   = 1.0
         cx, cy = 0.0, 0.0
-    tl = ng.mapToGlobal(ng.rect().topLeft())
-    return {
-        "zoom": zoom, "center_x": cx, "center_y": cy,
-        "widget_w": ng.width(), "widget_h": ng.height(),
-        "global_x": tl.x(), "global_y": tl.y(),
-    }
+
+    try:
+        tl = ng.mapToGlobal(ng.rect().topLeft())
+        return {
+            "zoom": zoom, "center_x": cx, "center_y": cy,
+            "widget_w": ng.width(), "widget_h": ng.height(),
+            "global_x": tl.x(), "global_y": tl.y(),
+        }
+    except Exception as e:
+        print("[Backdrop Draw] Could not capture DAG geometry: %s" % e)
+        return None
 
 def _global_rect_to_canvas(ds, rect):
     tl_lx = rect.left()   - ds["global_x"]
@@ -642,7 +719,7 @@ class SettingsDialog(QtWidgets.QDialog):
 
 def open_settings():
     dlg = SettingsDialog(QtWidgets.QApplication.activeWindow())
-    dlg.exec_()
+    _exec_dialog(dlg)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -962,26 +1039,31 @@ class DrawOverlay(QtWidgets.QWidget):
 
 def _make_backdrop(dag_state, global_rect, cursor_pos):
     dlg = BackdropDialog(cursor_pos, QtWidgets.QApplication.activeWindow())
-    if dlg.exec_() != QtWidgets.QDialog.Accepted:
+    if _exec_dialog(dlg) != QtWidgets.QDialog.Accepted:
         return
 
     label, hex_color, font_size = dlg.get_values()
-    tl_x, tl_y, br_x, br_y = _global_rect_to_canvas(dag_state, global_rect)
 
-    pad     = CFG.get("padding", 40)
-    z_order = _next_z_order()
+    try:
+        tl_x, tl_y, br_x, br_y = _global_rect_to_canvas(dag_state, global_rect)
 
-    bd = nuke.nodes.BackdropNode(
-        xpos           = int(tl_x - pad),
-        ypos           = int(tl_y - pad),
-        bdwidth        = int((br_x - tl_x) + pad * 2),
-        bdheight       = int((br_y - tl_y) + pad * 2),
-        tile_color     = _hex_to_nuke_color(hex_color),
-        note_font_size = font_size,
-        z_order        = z_order,
-        label          = label,
-    )
-    bd["z_order"].setValue(z_order)
+        pad     = CFG.get("padding", 40)
+        z_order = _next_z_order()
+
+        bd = nuke.nodes.BackdropNode(
+            xpos           = int(tl_x - pad),
+            ypos           = int(tl_y - pad),
+            bdwidth        = int((br_x - tl_x) + pad * 2),
+            bdheight       = int((br_y - tl_y) + pad * 2),
+            tile_color     = _hex_to_nuke_color(hex_color),
+            note_font_size = font_size,
+            z_order        = z_order,
+            label          = label,
+        )
+        bd["z_order"].setValue(z_order)
+    except Exception as e:
+        nuke.message("Backdrop Draw: could not create backdrop.\n%s" % e)
+        print("[Backdrop Draw] Error creating backdrop: %s" % e)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1000,13 +1082,28 @@ def start_backdrop_draw():
     if ng is None:
         nuke.message(
             "Could not find the Node Graph (DAG) panel.\n"
-            "Make sure the Node Graph is visible in your current layout."
+            "Make sure the Node Graph is visible in your current layout.\n\n"
+            "If it stays hidden, run this in the Script Editor and report the output:\n"
+            "    import backdrop_draw; backdrop_draw._diagnose_dag()"
         )
         return
 
     dag_state = _capture_dag_state(ng)
-    overlay   = DrawOverlay()
-    _overlay  = overlay
+    if dag_state is None:
+        nuke.message(
+            "Could not read the Node Graph geometry.\n"
+            "Please click inside the Node Graph and try again."
+        )
+        return
+
+    try:
+        overlay  = DrawOverlay()
+        _overlay = overlay
+    except Exception as e:
+        nuke.message("Backdrop Draw: could not open the draw overlay.\n%s" % e)
+        print("[Backdrop Draw] Overlay error: %s" % e)
+        _overlay = None
+        return
 
     def on_selected(rect, cursor_pos):
         global _overlay
@@ -1026,11 +1123,14 @@ def start_backdrop_draw():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def register():
-    sc = CFG.get("shortcut", "v")
-    nuke.menu("Nuke").addCommand("Custom/Backdrop Draw",          start_backdrop_draw, sc)
-    nuke.menu("Nodes").addCommand("Custom/Backdrop Draw",         start_backdrop_draw, sc)
-    nuke.menu("Nuke").addCommand("Custom/Backdrop Draw Settings", open_settings)
-    print("[Backdrop Draw] Registered — shortcut: %s" % sc)
+    try:
+        sc = CFG.get("shortcut", "v")
+        nuke.menu("Nuke").addCommand("Edit/Backdrop Draw/Backdrop Draw",          start_backdrop_draw, sc)
+        nuke.menu("Nodes").addCommand("Custom/Backdrop Draw",                     start_backdrop_draw, sc)
+        nuke.menu("Nuke").addCommand("Edit/Backdrop Draw/Backdrop Draw Settings", open_settings)
+        print("[Backdrop Draw] Registered (PySide%d) - shortcut: %s" % (_PYSIDE, sc))
+    except Exception as e:
+        print("[Backdrop Draw] Registration failed: %s" % e)
 
 
 if __name__ == "__main__":
